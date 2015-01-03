@@ -78,10 +78,3 @@ instance SemiNum Point Size where
     Point p +~ Size s = Point (p + s)
     Point p -~ Size s = Point (p - s)
     Point p ~- Point q = Size (abs (p - q))
-
--- | Window references
-newtype WindowRef = WindowRef { unWindowRef :: Int }
-  deriving(Eq, Ord, Enum, Show, Typeable, Binary)
-
-instance Default WindowRef where def = WindowRef (-1)
-

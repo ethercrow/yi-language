@@ -25,7 +25,7 @@ import Text.Regex.TDFA.ReadRegex(parseRegex)
 import Text.Regex.TDFA.TDFA(patternToRegex)
 import Yi.Buffer.Basic (Direction(..))
 
--- input string, regexexp, backward regex.
+-- input string, regexexp
 data SearchExp = SearchExp { seInput        :: String
                            , seCompiled     :: Regex
                            , seBackCompiled :: Regex

@@ -21,7 +21,6 @@
 
 module Yi.Syntax
   ( Highlighter  ( .. )
-  , Cache
   , Scanner (..)
   , ExtHL        ( .. )
   , noHighlighter, mkHighlighter, skipScanner, emptyFileScan
@@ -84,7 +83,7 @@ skipScanner n (Scanner i l e r) = Scanner i l e (other 0 . r)
 instance Functor (Scanner st) where
     fmap f (Scanner i l e r) = Scanner i l (f e) (fmap (second f) . r)
 
-data Cache state result = Cache [state] result
+data Cache result = Cache result
 
 emptyFileScan :: Scanner Point Char
 emptyFileScan = Scanner
@@ -99,27 +98,20 @@ emptyFileScan = Scanner
 -- purpose of incremental-lazy eval.
 mkHighlighter :: forall state result. Show state =>
                  (Scanner Point Char -> Scanner state result) ->
-                     Highlighter (Cache state result) result
+                     Highlighter (Cache result) result
 mkHighlighter scanner =
   Yi.Syntax.SynHL
-        { hlStartState   = Cache [] emptyResult
+        { hlStartState   = Cache emptyResult
         , hlRun          = updateCache
-        , hlGetTree      = \(Cache _ result) -> result
+        , hlGetTree      = \(Cache result) -> result
         }
     where startState :: state
-          startState = scanInit    (scanner emptyFileScan)
+          startState = scanInit (scanner emptyFileScan)
           emptyResult = scanEmpty (scanner emptyFileScan)
-          updateCache :: Scanner Point Char -> Point -> Cache state result -> Cache state result
-          updateCache newFileScan dirtyOffset (Cache cachedStates oldResult) = Cache newCachedStates newResult
+          updateCache :: Scanner Point Char -> Point -> Cache result -> Cache result
+          updateCache newFileScan dirtyOffset (Cache oldResult) = Cache newResult
             where newScan = scanner newFileScan
-                  reused :: [state]
-                  reused = takeWhile ((< dirtyOffset) . scanLooked (scanner newFileScan)) cachedStates
-                  resumeState :: state
-                  resumeState = if null reused then startState else last reused
-
-                  newCachedStates = reused ++ fmap fst recomputed
-                  recomputed = scanRun newScan resumeState
-                  newResult :: result
+                  recomputed = scanRun newScan startState
                   newResult = if null recomputed then oldResult else snd $ head recomputed
 
 noHighlighter :: Highlighter () syntax
